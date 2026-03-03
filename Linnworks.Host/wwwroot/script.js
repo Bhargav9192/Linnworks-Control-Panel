@@ -83,15 +83,13 @@ async function runOrderSnapshot() {
 
         // runOrderSnapshot ના success block માં આ મુજબ બદલો:
         if (response.ok) {
-            const resultDiv = document.getElementById("orderResult");
-            resultDiv.style.display = "block";
-            resultDiv.innerHTML = `
-        <div class="d-flex justify-content-between">
-            <span class="badge badge-success">Valid: ${result.validCount}</span>
-            <span class="badge badge-danger">Invalid: ${result.invalidCount}</span>
-        </div>
-        <div class="mt-2 small text-muted">${result.message}</div>
-    `;
+            // નીચે મેસેજ પ્રિન્ટ કરવાને બદલે પોપ-અપ બતાવશે
+            Swal.fire({
+                title: 'Scenario Completed',
+                html: `Valid: ${result.validCount} | Invalid: ${result.invalidCount}<br>${result.message}`,
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
         } else {
             // ❌ Error Popup
             Swal.fire('Failed', result.message || 'Something went wrong', 'error');

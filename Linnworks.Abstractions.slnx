@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Dockerfile" />
+  </Folder>
   <Project Path="Linnworks.Abstractions/Linnworks.Abstractions.csproj" />
   <Project Path="Linnworks.API/LinnworksAPI.csproj" />
   <Project Path="Linnworks.Host/Linnworks.Host.csproj" Id="1a4d922d-8c8a-4ae5-a941-f72bb4ba73ca" />
