@@ -1,0 +1,66 @@
+using LinnworksMacro;
+using LinnworksMacro.LinnworksTest;
+using LinnworksMacro.Orders;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// HttpContextAccessor add karo jethi headers read kari shakay
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<LinnworksAPI.ApiObjectManager>(provider =>
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    var httpContext = provider.GetRequiredService<IHttpContextAccessor>().HttpContext;
+
+    // 1. Header mathi User Account lo (UI mathi aavse)
+    // Jo header na hoy to "Default" user vapro
+    var userAccount = httpContext?.Request.Headers["X-User-Account"].ToString() ?? "Default";
+
+    // 2. AppSettings mathi e user no section lo
+    var section = config.GetSection($"Linnworks:{userAccount}");
+
+    // Jo user section na male to Default section try karo
+    if (!section.Exists()) section = config.GetSection("Linnworks:Default");
+
+    var appId = Guid.Parse(section["ApplicationId"]);
+    var secret = Guid.Parse(section["ApplicationSecret"]);
+    var token = Guid.Parse(section["Token"]);
+    var userKey = section["UserKey"];
+
+    var authService = new LinnworksAuthService(appId, secret, token, userKey);
+    var session = authService.GetValidSessionAsync().GetAwaiter().GetResult();
+    var context = new LinnworksAPI.ApiContext(session.Token, session.Server);
+
+    return new LinnworksAPI.ApiObjectManager(context);
+});
+builder.Services.AddScoped<CreateOrdersFromSnapshotService>();
+builder.Services.AddScoped<Rishvi_CreateOrder_with_Scenarios>();
+builder.Services.AddScoped<Rishvi_GetFullStockSnapshot>();
+builder.Services.AddScoped<Rishvi_AutoPO_OnOrderProcesing>();
+builder.Services.AddScoped<Rishvi_WeighWise_Order_Split_Engine>();
+builder.Services.AddScoped<Rishvi_Quantity_Based_Splitting>();
+var app = builder.Build();
+
+// Development only
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+// 🔥 ADD THESE TWO LINES
+app.UseDefaultFiles();   // loads index.html automatically
+app.UseStaticFiles();    // enables wwwroot
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
