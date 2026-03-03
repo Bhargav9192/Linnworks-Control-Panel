@@ -17,7 +17,7 @@ public class OrderSnapshotController : ControllerBase
     {
         try
         {
-            await _service.RunAsync(request.UserAccount, request.ValidOrders, request.InvalidOrders);
+            await _service.RunAsync(request.UserAccount, request.ValidOrders, request.InvalidOrders, request.Location);
 
             return Ok(new
             {
@@ -32,6 +32,12 @@ public class OrderSnapshotController : ControllerBase
             return StatusCode(500, new { success = false, message = "Error: " + ex.Message });
         }
     }
+    [HttpGet("locations")]
+    public IActionResult GetLocations([FromQuery] string userAccount)
+    {
+        var locationNames = _service.GetLinnworksLocations(userAccount);
+        return Ok(locationNames);
+    }
 }
 
 public class SnapshotRequest
@@ -39,4 +45,5 @@ public class SnapshotRequest
     public string UserAccount { get; set; }
     public int ValidOrders { get; set; }
     public int InvalidOrders { get; set; }
+    public string Location { get; set; }
 }

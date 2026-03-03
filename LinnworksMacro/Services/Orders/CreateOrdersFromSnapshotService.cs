@@ -3,28 +3,31 @@ using LinnworksAPI.Models.Inventory;
 using Newtonsoft.Json;
 using Serilog;
 using Linnworks.Abstractions;
+using Microsoft.Extensions.Caching.Memory;
 namespace LinnworksMacro.Orders
 {
     public class CreateOrdersFromSnapshotService
     {
-        
-        private readonly LinnworksAPI.ApiObjectManager _api;
 
-        public CreateOrdersFromSnapshotService(LinnworksAPI.ApiObjectManager api)
+        private readonly LinnworksAPI.ApiObjectManager _api;
+        private readonly IMemoryCache _cache; // કેશ માટે
+        private const string LocationsCacheKey = "Linnworks_Locations_Key";
+
+        public CreateOrdersFromSnapshotService(LinnworksAPI.ApiObjectManager api, IMemoryCache cache)
         {
             _api = api;
+            _cache = cache;
         }
-        public async Task RunAsync(string userAccount, int validOrders, int invalidOrders)
+        public async Task RunAsync(string userAccount, int validOrders, int invalidOrders, string location)
         {
-            await Task.Run(() => Execute(userAccount, validOrders, invalidOrders));
+            await Task.Run(() => Execute(userAccount, validOrders, invalidOrders, location));
         }
-        public void Execute(string userAccount,int validOrders, int invalidOrders) // Added parameters for valid and invalid orders
+        public void Execute(string userAccount, int validOrders, int invalidOrders, string location)
         {
             Console.WriteLine($"Rishvi_create_order_from_snapshot started with {validOrders} valid orders and {invalidOrders} invalid orders");
 
             //  Load inventory snapshot
             string rootPath = Directory.GetCurrentDirectory();
-
             string fileName = (string.IsNullOrEmpty(userAccount) || userAccount.Equals("Default", StringComparison.OrdinalIgnoreCase))
                 ? "default_snapshot.json"
                 : $"{userAccount}_Snapshot.json";
@@ -110,7 +113,7 @@ namespace LinnworksMacro.Orders
                 // Create valid order
                 try
                 {
-                    var orderIds = _api.Orders.CreateOrders(new List<ChannelOrder> { order }, "Stream");
+                    var orderIds = _api.Orders.CreateOrders(new List<ChannelOrder> { order }, location);
                     Console.WriteLine($"Order created successfully. OrderId: {orderIds[0]}");
                     Log.Information($"Order Created Successfully OrderId: {orderIds[0]}");
                 }
@@ -171,7 +174,7 @@ namespace LinnworksMacro.Orders
                 // Create invalid order
                 try
                 {
-                    var orderIds = _api.Orders.CreateOrders(new List<ChannelOrder> { order }, "Stream");
+                    var orderIds = _api.Orders.CreateOrders(new List<ChannelOrder> { order }, location);
                     Console.WriteLine($"Order created successfully (Invalid). OrderId: {orderIds[0]}");
                     Log.Information($"Order Created Successfully (Invalid) OrderId: {orderIds[0]}");
                 }
@@ -253,7 +256,29 @@ namespace LinnworksMacro.Orders
             };
             return customer;
         }
+        public List<string> GetLinnworksLocations(string userAccount)
+        {
+            string dynamicCacheKey = $"{LocationsCacheKey}_{userAccount}";
 
+            if (!_cache.TryGetValue(dynamicCacheKey, out List<string> cachedLocations))
+            {
+                try
+                {
+                    var locations = _api.Inventory.GetStockLocations();
+                    cachedLocations = locations.Select(l => l.LocationName).ToList();
+
+                    var cacheEntryOptions = new MemoryCacheEntryOptions()
+                        .SetAbsoluteExpiration(TimeSpan.FromMinutes(30));
+
+                    _cache.Set(dynamicCacheKey, cachedLocations, cacheEntryOptions);
+                }
+                catch (Exception ex)
+                {
+                    return new List<string> { "Default" };
+                }
+            }
+            return cachedLocations;
+        }
         // Snapshot wrapper
         public class InventorySnapshotResponse
         {

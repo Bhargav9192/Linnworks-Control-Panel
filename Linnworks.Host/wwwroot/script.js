@@ -48,12 +48,14 @@ async function runOrderSnapshot() {
     const btn = event.target;
     const user = getActiveUser();
     const valid = parseInt(document.getElementById("validOrders").value) || 0;
+    const location = document.getElementById("orderLocation").value;
     const invalid = parseInt(document.getElementById("invalidOrders").value) || 0;
 
     const data = {
         userAccount: user,
         validOrders: valid,
-        invalidOrders: invalid
+        invalidOrders: invalid,
+        location: location
     };
 
     // UI Feedback
@@ -81,9 +83,7 @@ async function runOrderSnapshot() {
 
         const result = await response.json();
 
-        // runOrderSnapshot ના success block માં આ મુજબ બદલો:
         if (response.ok) {
-            // નીચે મેસેજ પ્રિન્ટ કરવાને બદલે પોપ-અપ બતાવશે
             Swal.fire({
                 title: 'Scenario Completed',
                 html: `Valid: ${result.validCount} | Invalid: ${result.invalidCount}<br>${result.message}`,
@@ -99,6 +99,48 @@ async function runOrderSnapshot() {
     } finally {
         btn.disabled = false;
         btn.innerText = "Run Order Snapshot";
+    }
+}
+document.addEventListener("DOMContentLoaded", function () {
+    loadLinnworksLocations();
+
+    const userDropdown = document.getElementById("globalSelectedUser");
+    if (userDropdown) {
+        userDropdown.addEventListener("change", function () {
+            console.log("User changed, refreshing locations...");
+            loadLinnworksLocations();
+        });
+    }
+});
+
+async function loadLinnworksLocations() {
+    const selectedUser = getActiveUser(); 
+    const locationDropdown = document.getElementById("orderLocation");
+
+    if (!locationDropdown) return;
+
+    locationDropdown.innerHTML = '<option>Loading...</option>';
+
+    try {
+        const response = await fetch(`/api/ordersnapshot/locations?userAccount=${selectedUser}`, {
+            method: 'GET',
+            headers: {
+                'X-User-Account': selectedUser 
+            }
+        });
+        const locations = await response.json();
+
+        if (response.ok) {
+            locationDropdown.innerHTML = "";
+            locations.forEach(loc => {
+                let option = document.createElement("option");
+                option.value = loc;
+                option.text = loc;
+                locationDropdown.add(option);
+            });
+        }
+    } catch (error) {
+        console.error("Error refreshing locations:", error);
     }
 }
 

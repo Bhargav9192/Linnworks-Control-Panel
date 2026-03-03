@@ -29,8 +29,8 @@
                     <div class="col-md-6">
                         <div class="input-group">
                             <select id="globalSelectedUser" class="form-control custom-select border-primary shadow-none">
-                                <option value="Default">Default User Account</option>
-                                <option value="linn@rishvi">Linn @ Rishvi (Testing Account)</option>
+                                <option value="Default">Default</option>
+                                <option value="linn@rishvi">Linn @ Rishvi</option>
                             </select>
                             <div class="input-group-append">
                                 <span class="input-group-text bg-primary text-white border-primary">
@@ -63,6 +63,12 @@
                 </div>
                 <div class="card-body">
                     <div class="input-group">
+                        <label><i class="fas fa-map-marker-alt"></i>Location</label>
+                        <select id="orderLocation">
+                            <option value="">Loading locations...</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
                         <label>Valid Orders</label>
                         <input type="number" id="validOrders" value="0">
                     </div>
@@ -81,6 +87,12 @@
                     <h3>Scenario Manager</h3>
                 </div>
                 <div class="card-body">
+                    <div class="input-group">
+                        <label><i class="fas fa-map-marker-alt"></i>Location</label>
+                        <select id="orderLocation2">
+                            <option value="">Loading locations...</option>
+                        </select>
+                    </div>
                     <div class="input-group">
                         <label for="scenarioName">Select Scenario</label>
                         <select id="scenarioName">

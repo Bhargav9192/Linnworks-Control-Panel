@@ -17,10 +17,14 @@ builder.Services.AddScoped<LinnworksAPI.ApiObjectManager>(provider =>
     var config = provider.GetRequiredService<IConfiguration>();
     var httpContext = provider.GetRequiredService<IHttpContextAccessor>().HttpContext;
 
-    // 1. Header mathi User Account lo (UI mathi aavse)
-    // Jo header na hoy to "Default" user vapro
-    var userAccount = httpContext?.Request.Headers["X-User-Account"].ToString() ?? "Default";
+    var userAccount = httpContext?.Request.Query["userAccount"].ToString();
 
+    if (string.IsNullOrEmpty(userAccount))
+    {
+        userAccount = httpContext?.Request.Headers["X-User-Account"].ToString();
+    }
+
+    if (string.IsNullOrEmpty(userAccount)) userAccount = "Default";
     // 2. AppSettings mathi e user no section lo
     var section = config.GetSection($"Linnworks:{userAccount}");
 
@@ -38,6 +42,7 @@ builder.Services.AddScoped<LinnworksAPI.ApiObjectManager>(provider =>
 
     return new LinnworksAPI.ApiObjectManager(context);
 });
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<CreateOrdersFromSnapshotService>();
 builder.Services.AddScoped<Rishvi_CreateOrder_with_Scenarios>();
 builder.Services.AddScoped<Rishvi_GetFullStockSnapshot>();
