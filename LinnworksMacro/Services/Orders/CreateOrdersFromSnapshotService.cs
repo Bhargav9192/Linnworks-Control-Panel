@@ -10,7 +10,7 @@ namespace LinnworksMacro.Orders
     {
 
         private readonly LinnworksAPI.ApiObjectManager _api;
-        private readonly IMemoryCache _cache; // કેશ માટે
+        private readonly IMemoryCache _cache; 
         private const string LocationsCacheKey = "Linnworks_Locations_Key";
 
         public CreateOrdersFromSnapshotService(LinnworksAPI.ApiObjectManager api, IMemoryCache cache)
@@ -18,9 +18,10 @@ namespace LinnworksMacro.Orders
             _api = api;
             _cache = cache;
         }
-        public async Task RunAsync(string userAccount, int validOrders, int invalidOrders, string location)
+        public Task RunAsync(string userAccount, int validOrders, int invalidOrders, string location)
         {
-            await Task.Run(() => Execute(userAccount, validOrders, invalidOrders, location));
+            Execute(userAccount, validOrders, invalidOrders, location);
+            return Task.CompletedTask;
         }
         public void Execute(string userAccount, int validOrders, int invalidOrders, string location)
         {

@@ -16,15 +16,17 @@ namespace LinnworksMacro.Orders
         {
             _api = api;
         }
-        public Task RunAsync(string scenario, bool commit, string userAccount)
+        public Task RunAsync(string scenario, bool commit, string userAccount, string location)
         {
-            Execute(scenario, commit, userAccount);
+            Execute(scenario, commit, userAccount, location);
             return Task.CompletedTask;
         }
 
-        public void Execute(string scenario, bool commit, string userAccount)
+        public void Execute(string scenario, bool commit, string userAccount, string location)
         {
             Log.Information($"Order Scenarios started | Scenario={scenario} | Commit={commit}");
+            if (string.IsNullOrWhiteSpace(location))
+                location = "Default";
 
             string fileName = (string.IsNullOrEmpty(userAccount) || userAccount.Equals("Default", StringComparison.OrdinalIgnoreCase))
             ? "full_stock_snapshot.json"
@@ -42,7 +44,7 @@ namespace LinnworksMacro.Orders
 
             var runner = new OrderScenarioRunner(snapshotService, payloadBuilder, orderService);
 
-            runner.Run(scenario, commit, "Default");
+            runner.Run(scenario, commit, location);
         }
         // ================= RUNNER =================
         private class OrderScenarioRunner

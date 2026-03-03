@@ -20,7 +20,7 @@ public class ScenarioController : ControllerBase
 
         try
         {
-            await _service.RunAsync(request.Scenario, request.Commit, request.UserAccount);
+            await _service.RunAsync(request.Scenario, request.Commit, request.UserAccount, request.Location);
 
             return Ok(new
             {
@@ -42,4 +42,5 @@ public class ScenarioRequest
     public string Scenario { get; set; }
     public bool Commit { get; set; }
     public string UserAccount { get; set; }
+     public string Location { get; set; } 
 }

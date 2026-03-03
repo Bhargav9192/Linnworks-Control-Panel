@@ -44,7 +44,7 @@ function getActiveUser() {
     return document.getElementById("globalSelectedUser").value;
 }
 
-async function runOrderSnapshot() {
+async function runOrderSnapshot(event) {
     const btn = event.target;
     const user = getActiveUser();
     const valid = parseInt(document.getElementById("validOrders").value) || 0;
@@ -102,13 +102,15 @@ async function runOrderSnapshot() {
     }
 }
 document.addEventListener("DOMContentLoaded", function () {
-    loadLinnworksLocations();
+    loadLinnworksLocations();      // Order Snapshot
+    loadScenarioLocations();       // 👈 ADD THIS
 
     const userDropdown = document.getElementById("globalSelectedUser");
     if (userDropdown) {
         userDropdown.addEventListener("change", function () {
             console.log("User changed, refreshing locations...");
             loadLinnworksLocations();
+            loadScenarioLocations();   // 👈 ADD THIS
         });
     }
 });
@@ -143,17 +145,52 @@ async function loadLinnworksLocations() {
         console.error("Error refreshing locations:", error);
     }
 }
+async function loadScenarioLocations() {
+    const selectedUser = getActiveUser();
+    const dropdown = document.getElementById("orderLocation2");
 
-async function runScenario() {
+    if (!dropdown) return;
+
+    dropdown.innerHTML = '<option>Loading locations...</option>';
+
+    try {
+        const response = await fetch(`/api/ordersnapshot/locations?userAccount=${selectedUser}`, {
+            method: 'GET',
+            headers: { 'X-User-Account': selectedUser }
+        });
+
+        const locations = await response.json();
+
+        if (response.ok) {
+            dropdown.innerHTML = "";
+
+            locations.forEach(loc => {
+                let option = document.createElement("option");
+                option.value = loc;
+                option.text = loc;
+                dropdown.add(option);
+            });
+        } else {
+            dropdown.innerHTML = '<option>Error loading</option>';
+        }
+
+    } catch (error) {
+        console.error("Scenario location load error:", error);
+        dropdown.innerHTML = '<option>Error loading</option>';
+    }
+}
+async function runScenario(event) {
     const btn = event.target;
     const user = getActiveUser();
     const scenarioName = document.getElementById("scenarioName").value;
     const isCommitted = document.getElementById("commitFlag").checked;
+    const location = document.getElementById("orderLocation2").value;
 
     const data = {
         userAccount: user,
         scenario: scenarioName,
-        commit: isCommitted
+        commit: isCommitted,
+        location: location
     };
 
     // Button status change
