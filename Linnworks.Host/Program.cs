@@ -4,6 +4,7 @@ using LinnworksMacro.Orders;
 using Serilog;
 
 LoggingConfig.Configure();
+Log.Information("APPLICATION_STARTED");
 try
 {
     using var client = new HttpClient();
@@ -63,7 +64,7 @@ builder.Services.AddScoped<Rishvi_AutoPO_OnOrderProcesing>();
 builder.Services.AddScoped<Rishvi_WeighWise_Order_Split_Engine>();
 builder.Services.AddScoped<Rishvi_Quantity_Based_Splitting>();
 var app = builder.Build();
-
+app.UseSerilogRequestLogging();
 // Development only
 if (app.Environment.IsDevelopment())
 {

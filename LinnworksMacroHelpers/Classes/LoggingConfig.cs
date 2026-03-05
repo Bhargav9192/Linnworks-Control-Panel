@@ -8,7 +8,6 @@ public static class LoggingConfig
     public static void Configure()
     {
         var elasticUrl = "http://77.68.17.136:9200";
-        var apiKey = Environment.GetEnvironmentVariable("ELASTIC_API_KEY");
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
@@ -17,10 +16,7 @@ public static class LoggingConfig
             .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticUrl))
             {
                 AutoRegisterTemplate = true,
-                IndexFormat = "linnworks-simulator-logs-{0:yyyy.MM.dd}",
-                ModifyConnectionSettings = x => x
-                    .ApiKeyAuthentication(new ApiKeyAuthenticationCredentials(apiKey))
-                    .RequestTimeout(TimeSpan.FromSeconds(30))
+                IndexFormat = "linnworks-simulator-logs-{0:yyyy.MM.dd}"
             })
             .CreateLogger();
     }
