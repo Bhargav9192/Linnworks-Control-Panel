@@ -101,7 +101,6 @@ namespace LinnworksMacro
                 Log.Error($"Error during fetch: {ex.Message}");
             }
 
-            // બાકીનું સેવ કરવાનું લોજિક...
             var snapshot = new StockSnapshots
             {
                 Count = allStockItems.Count,

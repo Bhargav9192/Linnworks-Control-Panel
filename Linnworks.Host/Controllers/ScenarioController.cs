@@ -18,15 +18,24 @@ public class ScenarioController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Scenario))
             return BadRequest(new { success = false, message = "Scenario is required." });
 
+        if (request.OrderCount <= 0 || request.OrderCount > 1000)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "OrderCount must be between 1 and 1000"
+            });
+        }
         try
         {
-            await _service.RunAsync(request.Scenario, request.Commit, request.UserAccount, request.Location);
-
+            await _service.RunAsync(request.Scenario, request.Commit, request.UserAccount, request.Location,request.OrderCount);
+            
             return Ok(new
             {
                 success = true,
                 message = "Scenario executed successfully",
                 scenarioName = request.Scenario,
+                orderCount = request.OrderCount,
                 isCommitted = request.Commit
             });
         }
@@ -42,5 +51,6 @@ public class ScenarioRequest
     public string Scenario { get; set; }
     public bool Commit { get; set; }
     public string UserAccount { get; set; }
-    public string Location { get; set; } 
+    public string Location { get; set; }
+    public int OrderCount { get; set; }
 }

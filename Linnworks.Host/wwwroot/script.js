@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 async function loadLinnworksLocations() {
-    const selectedUser = getActiveUser(); 
+    const selectedUser = getActiveUser();
     const locationDropdown = document.getElementById("orderLocation");
 
     if (!locationDropdown) return;
@@ -127,7 +127,7 @@ async function loadLinnworksLocations() {
         const response = await fetch(`/api/ordersnapshot/locations?userAccount=${selectedUser}`, {
             method: 'GET',
             headers: {
-                'X-User-Account': selectedUser 
+                'X-User-Account': selectedUser
             }
         });
         const locations = await response.json();
@@ -185,12 +185,14 @@ async function runScenario(event) {
     const scenarioName = document.getElementById("scenarioName").value;
     const isCommitted = document.getElementById("commitFlag").checked;
     const location = document.getElementById("orderLocation2").value;
+    const orderCount = document.getElementById("orderCount").value;
 
     const data = {
         userAccount: user,
         scenario: scenarioName,
         commit: isCommitted,
-        location: location
+        location: location,
+        orderCount:orderCount
     };
 
     // Button status change
@@ -214,7 +216,8 @@ async function runScenario(event) {
             Swal.fire({
                 title: 'Scenario Completed',
                 html: `<b>Selected:</b> ${result.scenarioName}<br>` +
-                    `<b>Commit Changes:</b> ${result.isCommitted ? "Yes" : "No"}<br><br>` +
+                    `<b>Commit Changes:</b> ${result.isCommitted ? "Yes" : "No"}<br>` +
+                    `<b>Order Count:</b> ${result.orderCount}<br><br>` +
                     `${result.message}`,
                 icon: 'success',
                 confirmButtonColor: '#8b5cf6' // Purple color tamara button mujab
@@ -289,7 +292,7 @@ async function fetchFullStock() {
 
 // 4. Auto PO & Order Processing Function
 async function runAutoPO() {
-    const selectedUser = getActiveUser(); 
+    const selectedUser = getActiveUser();
     const btn = event.target;
     const apiUrl = "/api/autopo/run";
 
@@ -339,7 +342,7 @@ async function runAutoPO() {
 }
 // 5. WeighWise Order Splitter Function
 async function executeWeightSplit() {
-    const selectedUser = getActiveUser(); 
+    const selectedUser = getActiveUser();
     const btn = event.target;
     const rawInput = document.getElementById("splitOrderIds").value;
     const maxKg = document.getElementById("splitMaxKg").value;
@@ -386,7 +389,7 @@ async function executeWeightSplit() {
     }
 }
 async function executeQuantitySplit() {
-    const selectedUser = getActiveUser(); 
+    const selectedUser = getActiveUser();
     const btn = event.target;
     const orderInput = document.getElementById("qtyOrderIds").value;
     const thresholdInput = document.getElementById("qtyThreshold").value;

@@ -16,13 +16,13 @@ namespace LinnworksMacro.Orders
         {
             _api = api;
         }
-        public Task RunAsync(string scenario, bool commit, string userAccount, string location)
+        public Task RunAsync(string scenario, bool commit, string userAccount, string location, int orderCount)
         {
-            Execute(scenario, commit, userAccount, location);
+            Execute(scenario, commit, userAccount, location,orderCount);
             return Task.CompletedTask;
         }
 
-        public void Execute(string scenario, bool commit, string userAccount, string location)
+        public void Execute(string scenario, bool commit, string userAccount, string location, int orderCount)
         {
             Log.Information($"Order Scenarios started | Scenario={scenario} | Commit={commit}");
             if (string.IsNullOrWhiteSpace(location))
@@ -44,7 +44,7 @@ namespace LinnworksMacro.Orders
 
             var runner = new OrderScenarioRunner(snapshotService, payloadBuilder, orderService);
 
-            runner.Run(scenario, commit, location);
+            runner.Run(scenario, commit, location,orderCount);
         }
         // ================= RUNNER =================
         private class OrderScenarioRunner
@@ -59,48 +59,62 @@ namespace LinnworksMacro.Orders
                 _payloadBuilder = payloadBuilder;
                 _orderService = orderService;
             }
-            public void Run(string scenario, bool commit, string location)
+            public void Run(string scenario, bool commit, string location, int orderCount)
             {
-                switch (scenario)
+                for (int i = 0; i < orderCount; i++)
                 {
-                    case "single_in_stock":
-                        RunSingleInStock(commit, location);
-                        break;
-                    case "single_no_stock":
-                        RunSingleNoStock(commit, location);
-                        break;
-                    case "single_composite":
-                        RunSingleComposite(commit, location);
-                        break;
-                    case "single_insufficient_stock":
-                        RunSingleInsufficientStock(commit, location);
-                        break;
-                    case "multi_in_stock":
-                        RunMultiInStock(commit, location);
-                        break;
-                    case "multi_out_stock":
-                        RunMultiOutStock(commit, location);
-                        break;
-                    case "multi_multi_qty":
-                        RunMultiWithMultiQty(commit, location);
-                        break;
-                    case "multi_insufficient_stock":
-                        RunMultiInsufficientStock(commit, location);
-                        break;
-                    case "all":
-                        RunSingleInStock(commit, location);
-                        RunSingleNoStock(commit, location);
-                        RunSingleComposite(commit, location);
-                        RunSingleInsufficientStock(commit, location);
-                        RunMultiInStock(commit, location);
-                        RunMultiOutStock(commit, location);
-                        RunMultiWithMultiQty(commit, location);
-                        RunMultiInsufficientStock(commit, location);
-                        break;
+                    if (orderCount <= 0) return;
+                    Log.Information("Running scenario {Scenario} Order {Index}/{Total}", scenario, i + 1, orderCount);
 
-                    default:
-                        Log.Information("Unknown scenario");
-                        break;
+                    switch (scenario)
+                    {
+                        case "single_in_stock":
+                            RunSingleInStock(commit, location);
+                            break;
+
+                        case "single_no_stock":
+                            RunSingleNoStock(commit, location);
+                            break;
+
+                        case "single_composite":
+                            RunSingleComposite(commit, location);
+                            break;
+
+                        case "single_insufficient_stock":
+                            RunSingleInsufficientStock(commit, location);
+                            break;
+
+                        case "multi_in_stock":
+                            RunMultiInStock(commit, location);
+                            break;
+
+                        case "multi_out_stock":
+                            RunMultiOutStock(commit, location);
+                            break;
+
+                        case "multi_multi_qty":
+                            RunMultiWithMultiQty(commit, location);
+                            break;
+
+                        case "multi_insufficient_stock":
+                            RunMultiInsufficientStock(commit, location);
+                            break;
+
+                        case "all":
+                            RunSingleInStock(commit, location);
+                            RunSingleNoStock(commit, location);
+                            RunSingleComposite(commit, location);
+                            RunSingleInsufficientStock(commit, location);
+                            RunMultiInStock(commit, location);
+                            RunMultiOutStock(commit, location);
+                            RunMultiWithMultiQty(commit, location);
+                            RunMultiInsufficientStock(commit, location);
+                            break;
+
+                        default:
+                            Log.Information("Unknown scenario");
+                            return;
+                    }
                 }
             }
             private void RunSingleInStock(bool commit, string location)
@@ -146,7 +160,11 @@ namespace LinnworksMacro.Orders
             private void RunMultiOutStock(bool commit, string location)
             {
                 var items = _snapshotService.GetMultipleOutOfStockItems(3);
-
+                if (items == null || items.Count == 0)
+                {
+                    Log.Information("Scenario aborted: No out-of-stock items found.");
+                    return;
+                }
                 var payload = _payloadBuilder.Build(items[0], 1, "MultiOutStock");
 
                 foreach (var item in items.Skip(1))
