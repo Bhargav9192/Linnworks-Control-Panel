@@ -151,7 +151,7 @@ async function loadScenarioLocations() {
 
     if (!dropdown) return;
 
-    dropdown.innerHTML = '<option>Loading locations...</option>';
+    dropdown.innerHTML = '<option>Loading...</option>';
 
     try {
         const response = await fetch(`/api/ordersnapshot/locations?userAccount=${selectedUser}`, {
