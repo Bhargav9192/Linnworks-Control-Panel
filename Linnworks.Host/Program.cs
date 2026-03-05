@@ -1,9 +1,12 @@
 using LinnworksMacro;
 using LinnworksMacro.LinnworksTest;
 using LinnworksMacro.Orders;
+using Serilog;
 
+LoggingConfig.Configure();
+Log.Information("Application started");
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Host.UseSerilog();
 // Add services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -60,12 +63,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// 🔥 ADD THESE TWO LINES
 app.UseDefaultFiles();   // loads index.html automatically
 app.UseStaticFiles();    // enables wwwroot
 
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.Lifetime.ApplicationStopped.Register(() =>
+{
+    Log.CloseAndFlush();
+});
 app.Run();

@@ -12,7 +12,7 @@
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-User-Account": user // 👈 Aa header "headers" object ni andar hovo joiye
+                "X-User-Account": user //  Aa header "headers" object ni andar hovo joiye
             },
             body: JSON.stringify(body)
         });

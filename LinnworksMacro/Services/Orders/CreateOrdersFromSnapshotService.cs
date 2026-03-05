@@ -25,7 +25,7 @@ namespace LinnworksMacro.Orders
         }
         public void Execute(string userAccount, int validOrders, int invalidOrders, string location)
         {
-            Console.WriteLine($"Rishvi_create_order_from_snapshot started with {validOrders} valid orders and {invalidOrders} invalid orders");
+            Log.Information($"Rishvi_create_order_from_snapshot started with {validOrders} valid orders and {invalidOrders} invalid orders");
 
             //  Load inventory snapshot
             string rootPath = Directory.GetCurrentDirectory();
@@ -37,7 +37,6 @@ namespace LinnworksMacro.Orders
 
             if (!File.Exists(snapshotPath))
             {
-                Console.WriteLine("Inventory snapshot file not found");
                 Log.Error("Inventory snapshot file not found");
                 return;
             }
@@ -48,7 +47,6 @@ namespace LinnworksMacro.Orders
 
             if (snapshot?.Items == null || snapshot.Items.Count == 0)
             {
-                Console.WriteLine("Inventory snapshot empty");
                 Log.Error("Inventory snapshot file not found");
                 return;
             }
@@ -60,7 +58,7 @@ namespace LinnworksMacro.Orders
 
             if (!validItems.Any())
             {
-                Console.WriteLine("No valid items with RetailPrice > 0 and Available > 0");
+                Log.Information("No valid items with RetailPrice > 0 and Available > 0");
                 return;
             }
 
@@ -115,12 +113,14 @@ namespace LinnworksMacro.Orders
                 try
                 {
                     var orderIds = _api.Orders.CreateOrders(new List<ChannelOrder> { order }, location);
-                    Console.WriteLine($"Order created successfully. OrderId: {orderIds[0]}");
-                    Log.Information($"Order Created Successfully OrderId: {orderIds[0]}");
+
+                    var Norder = _api.Orders.GetOrderById(orderIds[0]);
+
+                    Log.Information($"Order Created Successfully OrderId: {Norder.NumOrderId}");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error creating valid order: {ex.Message}");
+                    Log.Information(ex,$"Error creating valid order");
                 }
             }
 
@@ -130,7 +130,7 @@ namespace LinnworksMacro.Orders
                 //  Pick a random valid item for each order
                 var items = validItems[_rnd.Next(validItems.Count)];  // New item selected for each invalid order
 
-                Console.WriteLine($"Creating invalid order for SKU: {items.ItemNumber} - Order #{i + 1}");
+                Log.Information($"Creating invalid order for SKU: {items.ItemNumber} - Order #{i + 1}");
 
                 var orderRef = $"SIM-{items.ItemNumber}-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{i + 1}"; // Unique reference for each order
 
@@ -176,12 +176,12 @@ namespace LinnworksMacro.Orders
                 try
                 {
                     var orderIds = _api.Orders.CreateOrders(new List<ChannelOrder> { order }, location);
-                    Console.WriteLine($"Order created successfully (Invalid). OrderId: {orderIds[0]}");
-                    Log.Information($"Order Created Successfully (Invalid) OrderId: {orderIds[0]}");
+                    var Norder = _api.Orders.GetOrderById(orderIds[0]);
+                    Log.Information($"Order Created Successfully (Invalid) OrderId: {Norder.NumOrderId}");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error creating invalid order: {ex.Message}");
+                    Log.Information($"Error creating invalid order: {ex.Message}");
                 }
             }
 

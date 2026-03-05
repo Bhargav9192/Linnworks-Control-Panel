@@ -29,7 +29,7 @@ namespace LinnworksMacro.Orders
                 location = "Default";
 
             string fileName = (string.IsNullOrEmpty(userAccount) || userAccount.Equals("Default", StringComparison.OrdinalIgnoreCase))
-            ? "full_stock_snapshot.json"
+            ? "default_snapshot.json"
             : $"{userAccount}_Snapshot.json";
 
             string snapshotPath = Path.Combine(Directory.GetCurrentDirectory(), "SnapshotFile", fileName);
@@ -126,7 +126,11 @@ namespace LinnworksMacro.Orders
             private void RunMultiInStock(bool commit, string location)
             {
                 var items = _snapshotService.GetMultipleInStockItems(3);
-
+                if (items.Count == 0)
+                {
+                    Log.Information("Not enough items for scenario");
+                    return;
+                }
                 var payload = _payloadBuilder.Build(items[0], 1, "MultiInStock");
 
                 foreach (var item in items.Skip(1))
@@ -409,17 +413,29 @@ namespace LinnworksMacro.Orders
                 try
                 {
                     var ids = _api.Orders.CreateOrders(new List<ChannelOrder> { order }, location);
+
                     if (ids != null && ids.Count > 0)
-                        Log.Information($"Order created successfully. OrderId = {ids[0]}");
+                    {
+                        var orderDetail = _api.Orders.GetOrderById(ids[0]);
+
+                        Log.Information(
+                            "Order created successfully OrderNum {OrderNum} OrderId {OrderId}",
+                            orderDetail.NumOrderId,
+                            ids[0]
+                        );
+                    }
                     else
+                    {
                         Log.Information("CreateOrders returned no order IDs");
+                    }
                 }
                 catch (WebException ex)
                 {
-                    using var reader = new StreamReader(ex.Response.GetResponseStream());
-                    var body = reader.ReadToEnd();
-                    Log.Information(body);
-                    throw;
+                    if (ex.Response != null)
+                    {
+                        using var reader = new StreamReader(ex.Response.GetResponseStream());
+                        Log.Information(reader.ReadToEnd());
+                    }
                 }
             }
         }

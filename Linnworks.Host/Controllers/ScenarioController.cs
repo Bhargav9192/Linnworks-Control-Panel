@@ -42,5 +42,5 @@ public class ScenarioRequest
     public string Scenario { get; set; }
     public bool Commit { get; set; }
     public string UserAccount { get; set; }
-     public string Location { get; set; } 
+    public string Location { get; set; } 
 }
