@@ -4,7 +4,17 @@ using LinnworksMacro.Orders;
 using Serilog;
 
 LoggingConfig.Configure();
-Log.Information("Application started");
+try
+{
+    using var client = new HttpClient();
+    var response = client.GetAsync("http://77.68.17.136:9200").Result;
+
+    Log.Information("ELASTIC_TEST_SUCCESS StatusCode {StatusCode}", response.StatusCode);
+}
+catch (Exception ex)
+{
+    Log.Error("ELASTIC_TEST_FAILED {Error}", ex.Message);
+}
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
 // Add services
