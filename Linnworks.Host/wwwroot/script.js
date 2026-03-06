@@ -50,7 +50,16 @@ async function runOrderSnapshot(event) {
     const valid = parseInt(document.getElementById("validOrders").value) || 0;
     const location = document.getElementById("orderLocation").value;
     const invalid = parseInt(document.getElementById("invalidOrders").value) || 0;
-
+    // --- NEW VALIDATION CODE ---
+    if (valid === 0 && invalid === 0) {
+        Swal.fire({
+            title: 'Validation Error',
+            text: 'Please enter at least one Valid or Invalid order count.',
+            icon: 'warning',
+            confirmButtonColor: '#0081ff'
+        });
+        return; // This stops the function from continuing
+    }
     const data = {
         userAccount: user,
         validOrders: valid,
@@ -346,7 +355,15 @@ async function executeWeightSplit() {
     const btn = event.target;
     const rawInput = document.getElementById("splitOrderIds").value;
     const maxKg = document.getElementById("splitMaxKg").value;
-
+    if (!maxKg || parseFloat(maxKg) <= 0) {
+        Swal.fire({
+            title: 'Invalid Weight',
+            text: 'Please enter a Max Allowed Weight greater than 0.',
+            icon: 'warning',
+            confirmButtonColor: '#8b5cf6'
+        });
+        return; 
+    }
     const orderNumArray = rawInput.split(',')
         .map(id => parseInt(id.trim()))
         .filter(id => !isNaN(id));
@@ -393,7 +410,15 @@ async function executeQuantitySplit() {
     const btn = event.target;
     const orderInput = document.getElementById("qtyOrderIds").value;
     const thresholdInput = document.getElementById("qtyThreshold").value;
-
+    if (!thresholdInput || parseInt(thresholdInput) <= 0) {
+        Swal.fire({
+            title: 'Invalid Quantity',
+            text: 'Please enter a Max Items Per Package greater than 0.',
+            icon: 'warning',
+            confirmButtonColor: '#8b5cf6'
+        });
+        return; // Function mathi bahar nikli jashe
+    }
     const numOrderIds = orderInput.split(',')
         .map(id => parseInt(id.trim()))
         .filter(id => !isNaN(id));
