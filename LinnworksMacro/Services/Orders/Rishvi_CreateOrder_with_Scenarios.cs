@@ -355,10 +355,11 @@ namespace LinnworksMacro.Orders
             private ChannelOrder CreateBaseOrder(string subSource)
             {
                 var (customerName, address) = RandomCustomerGenerator.CreateUK();
+                var (source, randomSubSource) = RandomChannelGenerator.GetRandom();
                 return new ChannelOrder
                 {
-                    Source = "Linnworks Simulator",
-                    SubSource = subSource,
+                    Source = source,
+                    SubSource = randomSubSource + "-" + subSource,
                     Site = "Default",
                     Currency = "GBP",
                     ReferenceNumber = $"SW{_rnd.Next(1, 20)} {_rnd.Next(1, 9)}AA",
@@ -447,12 +448,13 @@ namespace LinnworksMacro.Orders
                         Log.Information("CreateOrders returned no order IDs");
                     }
                 }
-                catch (WebException ex)
+                catch (WebException webEx)
                 {
-                    if (ex.Response != null)
+                    using (var stream = webEx.Response?.GetResponseStream())
+                    using (var reader = new StreamReader(stream))
                     {
-                        using var reader = new StreamReader(ex.Response.GetResponseStream());
-                        Log.Information(reader.ReadToEnd());
+                        var responseText = reader.ReadToEnd();
+                        Console.WriteLine("HTTP Error Body: " + responseText);
                     }
                 }
             }
@@ -510,11 +512,29 @@ namespace LinnworksMacro.Orders
                 return (name, address);
             }
         }
+        private static class RandomChannelGenerator
+        {
+            private static readonly (string Source, string[] SubSources)[] Channels =
+            {
+                ("Marketplace Simulator", new [] { "Amazon UK", "Amazon EU" }),
+                ("Marketplace Simulator", new [] { "eBay UK", "eBay Global" }),
+                ("Marketplace Simulator", new [] { "BigCommerce Store" }),
+            };
+
+            public static (string source, string subSource) GetRandom()
+            {
+                var channel = Channels[_rnd.Next(Channels.Length)];
+                var sub = channel.SubSources[_rnd.Next(channel.SubSources.Length)];
+
+                return (channel.Source, sub);
+            }
+        }
 
         // ================= SNAPSHOT MODELS =================
         private class InventorySnapshotResponse
         {
             public List<InventorySnapshotItem> Items { get; set; }
         }
+
     }
 }
