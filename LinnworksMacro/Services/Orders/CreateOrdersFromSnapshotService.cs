@@ -10,7 +10,7 @@ namespace LinnworksMacro.Orders
     {
 
         private readonly LinnworksAPI.ApiObjectManager _api;
-        private readonly IMemoryCache _cache; 
+        private readonly IMemoryCache _cache;
         private const string LocationsCacheKey = "Linnworks_Locations_Key";
 
         public CreateOrdersFromSnapshotService(LinnworksAPI.ApiObjectManager api, IMemoryCache cache)
@@ -120,7 +120,7 @@ namespace LinnworksMacro.Orders
                 }
                 catch (Exception ex)
                 {
-                    Log.Information(ex,$"Error creating valid order");
+                    Log.Information(ex, $"Error creating valid order");
                 }
             }
 
@@ -189,6 +189,24 @@ namespace LinnworksMacro.Orders
 
         //  Generate valid customer
         private static readonly Random _rnd = new Random();
+        private static readonly string[] Address2Options =
+        {
+            "Flat 1", "Flat 2", "Flat 3A", "Flat 4B",
+            "Apartment 12", "Suite 5", "Unit 8",
+            "Floor 2", "Room 15"
+        };
+
+        private static readonly string[] Address3Options =
+        {
+            "Riverside Court",
+            "Victoria Building",
+            "The Residency",
+            "Central Plaza",
+            "Park View Apartments",
+            "Kings Tower",
+            "City Heights",
+            "Greenwood Estate"
+        };
         private ChannelAddress GenerateCustomer()
         {
             string[] firstNames = { "Olivia", "Amelia", "Isla", "Ava", "Sophia", "Jack", "Noah", "Leo", "Arthur", "Oscar" };
@@ -214,8 +232,8 @@ namespace LinnworksMacro.Orders
                 FullName = $"{first} {last}",
                 Company = company,
                 Address1 = $"{houseNumber} {street}",
-                Address2 = "",
-                Address3 = "",
+                Address2 = Address2Options[_rnd.Next(Address2Options.Length)],
+                Address3 = Address3Options[_rnd.Next(Address3Options.Length)],
                 Town = town,
                 Region = county,
                 PostCode = postcode,
