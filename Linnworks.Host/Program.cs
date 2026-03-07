@@ -17,6 +17,7 @@ catch (Exception ex)
     Log.Error("ELASTIC_TEST_FAILED {Error}", ex.Message);
 }
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
 builder.Host.UseSerilog();
 // Add services
 builder.Services.AddControllers();
