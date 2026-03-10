@@ -1,9 +1,10 @@
-﻿using LinnworksAPI;
+﻿using Linnworks.Abstractions;
+using LinnworksAPI;
 using LinnworksAPI.Models.Inventory;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Serilog;
-using Linnworks.Abstractions;
-using Microsoft.Extensions.Caching.Memory;
+using static LinnworksMacro.Orders.CreateOrdersFromSnapshotService;
 namespace LinnworksMacro.Orders
 {
     public class CreateOrdersFromSnapshotService
@@ -12,7 +13,7 @@ namespace LinnworksMacro.Orders
         private readonly LinnworksAPI.ApiObjectManager _api;
         private readonly IMemoryCache _cache;
         private const string LocationsCacheKey = "Linnworks_Locations_Key";
-
+        private List<PostcodeData> _postcodeList;
         public CreateOrdersFromSnapshotService(LinnworksAPI.ApiObjectManager api, IMemoryCache cache)
         {
             _api = api;
@@ -26,9 +27,19 @@ namespace LinnworksMacro.Orders
         public void Execute(string userAccount, int validOrders, int invalidOrders, string location)
         {
             Log.Information($"Rishvi_create_order_from_snapshot started with {validOrders} valid orders and {invalidOrders} invalid orders");
-
-            //  Load inventory snapshot
             string rootPath = Directory.GetCurrentDirectory();
+            
+            var postcodePath = Path.Combine(rootPath, "wwwroot", "PostCodes", "uk_postcodes.csv");
+
+            if (File.Exists(postcodePath))
+            {
+                LoadPostcodes(postcodePath);
+            }
+            else
+            {
+                Log.Information("Postcode file not found: {Path}", postcodePath);
+                return;
+            }
             string fileName = (string.IsNullOrEmpty(userAccount) || userAccount.Equals("Default", StringComparison.OrdinalIgnoreCase))
                 ? "default_snapshot.json"
                 : $"{userAccount}_Snapshot.json";
@@ -210,20 +221,16 @@ namespace LinnworksMacro.Orders
         private ChannelAddress GenerateCustomer()
         {
             string[] firstNames = { "Olivia", "Amelia", "Isla", "Ava", "Sophia", "Jack", "Noah", "Leo", "Arthur", "Oscar" };
-            string[] lastNames = { "Smith", "Jones", "Taylor", "Brown", "Wilson", "Davies", "Evans", "Thomas", "Johnson", "Roberts" };
-            string[] towns = { "London", "Manchester", "Birmingham", "Leeds", "Bristol", "Cardiff", "Edinburgh", "Glasgow", "Liverpool", "Nottingham" };
-            string[] counties = { "Greater London", "West Midlands", "Greater Manchester", "West Yorkshire", "Bristol", "South Glamorgan", "Lothian", "Lanarkshire", "Merseyside", "Nottinghamshire" };
+            string[] lastNames = { "Smith", "Jones", "Taylor", "Brown", "Wilson", "Davies", "Evans", "Thomas", "Johnson", "Roberts" };           
             string[] streets = { "High Street", "Station Road", "Church Lane", "Victoria Street", "Main Street", "Park Avenue", "London Road", "Green Lane", "The Crescent", "King Street" };
 
             string first = firstNames[_rnd.Next(firstNames.Length)];
             string last = lastNames[_rnd.Next(lastNames.Length)];
-            string town = towns[_rnd.Next(towns.Length)];
-            string county = counties[_rnd.Next(counties.Length)];
             string street = streets[_rnd.Next(streets.Length)];
 
             int houseNumber = _rnd.Next(1, 201);
             string company = $"{last} Holdings Ltd";
-            string postcode = GeneratePostcode();
+            var postcodeData = GetRandomPostcode();
             string phone = $"+44 7{_rnd.Next(100000000, 999999999)}";
             string email = $"{first.ToLower()}.{last.ToLower()}+sim@rishvi.uk";
 
@@ -234,30 +241,53 @@ namespace LinnworksMacro.Orders
                 Address1 = $"{houseNumber} {street}",
                 Address2 = Address2Options[_rnd.Next(Address2Options.Length)],
                 Address3 = Address3Options[_rnd.Next(Address3Options.Length)],
-                Town = town,
-                Region = county,
-                PostCode = postcode,
-                Country = "GB",
+                Town = postcodeData.Town,
+                Region = postcodeData.Region,
+                PostCode = postcodeData.Postcode,
+                Country = postcodeData.Country,
                 PhoneNumber = phone,
                 EmailAddress = email
             };
         }
-        private string GeneratePostcode()
+        private PostcodeData GetRandomPostcode()
         {
-            const string letters = "ABCDEFGHJKLMNOPRSTUWYZ";
-            const string inwardLetters = "ABDEFGHJLNPQRSTUWXYZ";
+            if (_postcodeList == null || !_postcodeList.Any())
+                throw new Exception("Postcode list is empty.");
 
-            char l1 = letters[_rnd.Next(letters.Length)];
-            char l2 = (letters + "0123456789")[_rnd.Next(letters.Length + 10)];
-            int digit = _rnd.Next(1, 10);
-
-            int inwardDigit = _rnd.Next(0, 10);
-            char i1 = inwardLetters[_rnd.Next(inwardLetters.Length)];
-            char i2 = inwardLetters[_rnd.Next(inwardLetters.Length)];
-
-            return $"{l1}{l2}{digit} {inwardDigit}{i1}{i2}";
+            return _postcodeList[_rnd.Next(_postcodeList.Count)];
         }
+        private void LoadPostcodes(string path)
+        {
+            if (!File.Exists(path))
+                throw new Exception($"Postcode file not found: {path}");
 
+            _postcodeList = File.ReadAllLines(path)
+                .Skip(1)
+                .Select(line =>
+                {
+                    var cols = line.Split(new[] { ',', '\t' });
+
+                    if (cols.Length < 7)
+                        return null;
+
+                    return new PostcodeData
+                    {
+                        Postcode = Clean(cols[0]),
+                        Town = Clean(cols[5]),
+                        Region = Clean(cols[6]),
+                        Country = Clean(cols[7])
+                    };
+                })
+                .Where(x => x != null)
+                .ToList();
+        }
+        private string Clean(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return string.Empty;
+
+            return value.Trim().Trim('"');
+        }
         //  Generate invalid customer (missing details like address, name, etc.)
         private ChannelAddress GenerateInvalidCustomer()
         {
@@ -304,6 +334,13 @@ namespace LinnworksMacro.Orders
             public int Count { get; set; }
             public DateTime GeneratedAt { get; set; }
             public List<InventorySnapshotItem> Items { get; set; }
+        }
+        public class PostcodeData
+        {
+            public string Postcode { get; set; }
+            public string Town { get; set; }
+            public string Region { get; set; }
+            public string Country { get; set; }
         }
     }
 }
