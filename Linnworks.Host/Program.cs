@@ -23,7 +23,6 @@ builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.WebHost.UseUrls("https://0.0.0.0:7112");
 // HttpContextAccessor add karo jethi headers read kari shakay
 builder.Services.AddHttpContextAccessor();
 
