@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -207,9 +207,51 @@
                 </div>
             </section>
 
-            <section class="card placeholder">
+            <section class="card">
+                <div class="card-header">
+                    <span class="icon">🏷️</span>
+                    <h3>TRPK Scenario Manager</h3>
+                </div>
                 <div class="card-body">
-                    <p>+ Future Tool Placeholder</p>
+                    <div class="input-group">
+                        <div style="display: flex; gap: 15px; width: 100%;">
+                            <div style="flex: 2;">
+                                <label><i class="fas fa-map-marker-alt"></i> Location</label>
+                                <select id="trpkOrderLocation" class="form-control">
+                                    <option value="Default">Default</option>
+                                </select>
+                            </div>
+
+                            <div style="flex: 1;">
+                                <label>Order Count</label>
+                                <input type="number" id="trpkOrderCount" value="1" min="1" class="form-control" style="text-align: center;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="trpkScenarioName">Select Scenario</label>
+                        <select id="trpkScenarioName">
+                            <option value="trpk_all">Run All TRPK Scenarios</option>
+                            <optgroup label="Single Order Scenarios">
+                                <option value="trpk_single_in_stock">Single - In Stock</option>
+                                <option value="trpk_single_no_stock">Single - No Stock</option>
+                                <option value="trpk_single_composite">Single - Composite</option>
+                                <option value="trpk_single_insufficient_stock">Single - Insufficient Stock</option>
+                            </optgroup>
+                            <optgroup label="Multi Order Scenarios">
+                                <option value="trpk_multi_in_stock">Multi - In Stock</option>
+                                <option value="trpk_multi_out_stock">Multi - Out of Stock</option>
+                                <option value="trpk_multi_multi_qty">Multi - Multiple Qty</option>
+                                <option value="trpk_multi_insufficient_stock">Multi - Insufficient Stock</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="input-group checkbox-row">
+                        <input type="checkbox" id="trpkCommitFlag">
+                        <label for="trpkCommitFlag">Commit Changes</label>
+                    </div>
+                    <button class="btn btn-info" onclick="runTrpkScenario(event)">Execute TRPK Scenario</button>
+                    <div id="trpkScenarioResult" class="result-box"></div>
                 </div>
             </section>
 

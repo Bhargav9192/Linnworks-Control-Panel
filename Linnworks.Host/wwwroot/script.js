@@ -1,4 +1,4 @@
-﻿async function callApi(url, body, resultId, btnElement) {
+async function callApi(url, body, resultId, btnElement) {
     const user = getActiveUser();
     const resultDiv = document.getElementById(resultId);
     const originalText = btnElement.innerText;
@@ -157,10 +157,10 @@ async function loadLinnworksLocations() {
 async function loadScenarioLocations() {
     const selectedUser = getActiveUser();
     const dropdown = document.getElementById("orderLocation2");
+    const trpkDropdown = document.getElementById("trpkOrderLocation");
 
-    if (!dropdown) return;
-
-    dropdown.innerHTML = '<option>Loading...</option>';
+    if (dropdown) dropdown.innerHTML = '<option>Loading...</option>';
+    if (trpkDropdown) trpkDropdown.innerHTML = '<option>Loading...</option>';
 
     try {
         const response = await fetch(`/api/ordersnapshot/locations?userAccount=${selectedUser}`, {
@@ -171,21 +171,32 @@ async function loadScenarioLocations() {
         const locations = await response.json();
 
         if (response.ok) {
-            dropdown.innerHTML = "";
+            if (dropdown) dropdown.innerHTML = "";
+            if (trpkDropdown) trpkDropdown.innerHTML = "";
 
             locations.forEach(loc => {
-                let option = document.createElement("option");
-                option.value = loc;
-                option.text = loc;
-                dropdown.add(option);
+                if (dropdown) {
+                    let option = document.createElement("option");
+                    option.value = loc;
+                    option.text = loc;
+                    dropdown.add(option);
+                }
+                if (trpkDropdown) {
+                    let option = document.createElement("option");
+                    option.value = loc;
+                    option.text = loc;
+                    trpkDropdown.add(option);
+                }
             });
         } else {
-            dropdown.innerHTML = '<option>Error loading</option>';
+            if (dropdown) dropdown.innerHTML = '<option>Error loading</option>';
+            if (trpkDropdown) trpkDropdown.innerHTML = '<option>Error loading</option>';
         }
 
     } catch (error) {
         console.error("Scenario location load error:", error);
-        dropdown.innerHTML = '<option>Error loading</option>';
+        if (dropdown) dropdown.innerHTML = '<option>Error loading</option>';
+        if (trpkDropdown) trpkDropdown.innerHTML = '<option>Error loading</option>';
     }
 }
 async function runScenario(event) {
@@ -240,6 +251,59 @@ async function runScenario(event) {
     } finally {
         btn.disabled = false;
         btn.innerText = "Execute Scenario";
+    }
+}
+
+async function runTrpkScenario(event) {
+    const btn = event.target;
+    const user = getActiveUser();
+    const scenarioName = document.getElementById("trpkScenarioName").value;
+    const isCommitted = document.getElementById("trpkCommitFlag").checked;
+    const location = document.getElementById("trpkOrderLocation").value;
+    const orderCount = document.getElementById("trpkOrderCount").value;
+
+    const data = {
+        userAccount: user,
+        scenario: scenarioName,
+        commit: isCommitted,
+        location: location,
+        orderCount: orderCount
+    };
+
+    // Button status change
+    btn.disabled = true;
+    btn.innerText = "Running...";
+
+    try {
+        const response = await fetch("/api/scenario/run", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-User-Account': user
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'TRPK Scenario Completed',
+                html: `<b>Selected:</b> ${result.scenarioName}<br>` +
+                    `<b>Commit Changes:</b> ${result.isCommitted ? "Yes" : "No"}<br>` +
+                    `<b>Order Count:</b> ${result.orderCount}<br><br>` +
+                    `${result.message}`,
+                icon: 'success',
+                confirmButtonColor: '#8b5cf6'
+            });
+        } else {
+            Swal.fire('Error', result.message || 'Execution failed', 'error');
+        }
+    } catch (error) {
+        Swal.fire('Connection Error', 'Server busy or offline', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Execute TRPK Scenario";
     }
 }
 // 3. Fetch Full Stock Snapshot Function

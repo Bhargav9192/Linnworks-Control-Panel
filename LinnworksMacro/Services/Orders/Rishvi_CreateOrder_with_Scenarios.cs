@@ -1,4 +1,4 @@
-﻿using LinnworksAPI;
+using LinnworksAPI;
 using LinnworksAPI.Models.Inventory;
 using Newtonsoft.Json;
 using System.Net;
@@ -111,15 +111,58 @@ namespace LinnworksMacro.Orders
                             RunMultiInsufficientStock(commit, location);
                             break;
 
+                        case "trpk_single_in_stock":
+                            RunSingleInStock(commit, location, "TRPK");
+                            break;
+
+                        case "trpk_single_no_stock":
+                            RunSingleNoStock(commit, location, "TRPK");
+                            break;
+
+                        case "trpk_single_composite":
+                            RunSingleComposite(commit, location, "TRPK");
+                            break;
+
+                        case "trpk_single_insufficient_stock":
+                            RunSingleInsufficientStock(commit, location, "TRPK");
+                            break;
+
+                        case "trpk_multi_in_stock":
+                            RunMultiInStock(commit, location, "TRPK");
+                            break;
+
+                        case "trpk_multi_out_stock":
+                            RunMultiOutStock(commit, location, "TRPK");
+                            break;
+
+                        case "trpk_multi_multi_qty":
+                            RunMultiWithMultiQty(commit, location, "TRPK");
+                            break;
+
+                        case "trpk_multi_insufficient_stock":
+                            RunMultiInsufficientStock(commit, location, "TRPK");
+                            break;
+
+                        case "trpk_all":
+                            RunSingleInStock(commit, location, "TRPK");
+                            RunSingleNoStock(commit, location, "TRPK");
+                            RunSingleComposite(commit, location, "TRPK");
+                            RunSingleInsufficientStock(commit, location, "TRPK");
+                            RunMultiInStock(commit, location, "TRPK");
+                            RunMultiOutStock(commit, location, "TRPK");
+                            RunMultiWithMultiQty(commit, location, "TRPK");
+                            RunMultiInsufficientStock(commit, location, "TRPK");
+                            break;
+
                         default:
                             Log.Information("Unknown scenario");
                             return;
                     }
                 }
             }
-            private void RunSingleInStock(bool commit, string location)
+            private void RunSingleInStock(bool commit, string location, string prefix = null)
             {
-                var item = _snapshotService.GetRandomInStockItem();
+                var item = _snapshotService.GetRandomInStockItem(prefix);
                 if (item == null)
                 {
                     Log.Information("Cannot run scenario: No in-stock items found.");
@@ -127,19 +170,29 @@ namespace LinnworksMacro.Orders
                 }
                 CreateAndSubmit(item, 1, "SingleInStock", commit, location);
             }
-            private void RunSingleNoStock(bool commit, string location)
+            private void RunSingleNoStock(bool commit, string location, string prefix = null)
             {
-                var item = _snapshotService.GetRandomOutOfStockItem();
+                var item = _snapshotService.GetRandomOutOfStockItem(prefix);
+                if (item == null)
+                {
+                    Log.Information("Cannot run scenario: No out-of-stock items found.");
+                    return;
+                }
                 CreateAndSubmit(item, 1, "SingleNoStock", commit, location);
             }
-            private void RunSingleComposite(bool commit, string location)
+            private void RunSingleComposite(bool commit, string location, string prefix = null)
             {
-                var item = _snapshotService.GetRandomCompositeItem();
+                var item = _snapshotService.GetRandomCompositeItem(prefix);
+                if (item == null)
+                {
+                    Log.Information("Cannot run scenario: No composite items found.");
+                    return;
+                }
                 CreateAndSubmit(item, RandomQuantity(item), "SingleComposite", commit, location);
             }
-            private void RunMultiInStock(bool commit, string location)
+            private void RunMultiInStock(bool commit, string location, string prefix = null)
             {
-                var items = _snapshotService.GetMultipleInStockItems(3);
+                var items = _snapshotService.GetMultipleInStockItems(3, prefix);
                 if (items.Count == 0)
                 {
                     Log.Information("Not enough items for scenario");
@@ -157,9 +210,9 @@ namespace LinnworksMacro.Orders
                 if (commit)
                     _orderService.CreateOrder(payload, location);
             }
-            private void RunMultiOutStock(bool commit, string location)
+            private void RunMultiOutStock(bool commit, string location, string prefix = null)
             {
-                var items = _snapshotService.GetMultipleOutOfStockItems(3);
+                var items = _snapshotService.GetMultipleOutOfStockItems(3, prefix);
                 if (items == null || items.Count == 0)
                 {
                     Log.Information("Scenario aborted: No out-of-stock items found.");
@@ -177,9 +230,9 @@ namespace LinnworksMacro.Orders
                 if (commit)
                     _orderService.CreateOrder(payload, location);
             }
-            private void RunMultiInsufficientStock(bool commit, string location)
+            private void RunMultiInsufficientStock(bool commit, string location, string prefix = null)
             {
-                var items = _snapshotService.GetMultipleLowStockItems(3);
+                var items = _snapshotService.GetMultipleLowStockItems(3, prefix);
                 if (items == null || items.Count == 0)
                 {
                     Log.Information("Scenario Aborted: No low-stock items (qty 1-3) found in snapshot file.");
@@ -203,9 +256,9 @@ namespace LinnworksMacro.Orders
                 if (commit)
                     _orderService.CreateOrder(payload, location);
             }
-            private void RunSingleInsufficientStock(bool commit, string location)
+            private void RunSingleInsufficientStock(bool commit, string location, string prefix = null)
             {
-                var item = _snapshotService.GetLowStockItem();
+                var item = _snapshotService.GetLowStockItem(prefix);
                 if (item == null)
                 {
                     Log.Information("Scenario Aborted: No low-stock items (qty 1-3) found in snapshot file.");
@@ -223,9 +276,14 @@ namespace LinnworksMacro.Orders
                 );
             }
 
-            private void RunMultiWithMultiQty(bool commit, string location)
+            private void RunMultiWithMultiQty(bool commit, string location, string prefix = null)
             {
-                var items = _snapshotService.GetMultipleItems(3);
+                var items = _snapshotService.GetMultipleItems(3, prefix);
+                if (items == null || items.Count == 0)
+                {
+                    Log.Information("Scenario aborted: No items found.");
+                    return;
+                }
 
                 var payload = _payloadBuilder.Build(
                     items[0],
@@ -284,48 +342,48 @@ namespace LinnworksMacro.Orders
                     .DeserializeObject<InventorySnapshotResponse>(json)
                     .Items;
             }
-            public InventorySnapshotItem GetRandomInStockItem() =>
+            public InventorySnapshotItem GetRandomInStockItem(string prefix = null) =>
                 _items
-                    .Where(i => i.Available > 0)
+                    .Where(i => i.Available > 0 && (string.IsNullOrEmpty(prefix) || (i.ItemNumber != null && i.ItemNumber.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))))
                     .OrderBy(_ => Guid.NewGuid())
                     .FirstOrDefault();
-            public List<InventorySnapshotItem> GetMultipleInStockItems(int count) =>
+            public List<InventorySnapshotItem> GetMultipleInStockItems(int count, string prefix = null) =>
                 _items
-                    .Where(i => i.Available > 0)
+                    .Where(i => i.Available > 0 && (string.IsNullOrEmpty(prefix) || (i.ItemNumber != null && i.ItemNumber.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))))
                     .OrderBy(_ => Guid.NewGuid())
                     .Take(count)
                     .ToList();
-            public List<InventorySnapshotItem> GetMultipleLowStockItems(int count) =>
+            public List<InventorySnapshotItem> GetMultipleLowStockItems(int count, string prefix = null) =>
                 _items
-                    .Where(i => i.Available > 0 && i.Available <= 3)
+                    .Where(i => i.Available > 0 && i.Available <= 3 && (string.IsNullOrEmpty(prefix) || (i.ItemNumber != null && i.ItemNumber.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))))
                     .OrderBy(_ => Guid.NewGuid())
                     .Take(count)
                     .ToList();
 
-            public List<InventorySnapshotItem> GetMultipleOutOfStockItems(int count) =>
+            public List<InventorySnapshotItem> GetMultipleOutOfStockItems(int count, string prefix = null) =>
                 _items
-                    .Where(i => i.Available <= 0)
+                    .Where(i => i.Available <= 0 && (string.IsNullOrEmpty(prefix) || (i.ItemNumber != null && i.ItemNumber.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))))
                     .OrderBy(_ => Guid.NewGuid())
                     .Take(count)
                     .ToList();
-            public InventorySnapshotItem GetLowStockItem() =>
+            public InventorySnapshotItem GetLowStockItem(string prefix = null) =>
                 _items
-                    .Where(i => i.Available > 0 && i.Available <= 3)
+                    .Where(i => i.Available > 0 && i.Available <= 3 && (string.IsNullOrEmpty(prefix) || (i.ItemNumber != null && i.ItemNumber.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))))
                     .OrderBy(_ => Guid.NewGuid())
                     .FirstOrDefault();
 
-            public InventorySnapshotItem GetRandomCompositeItem()
+            public InventorySnapshotItem GetRandomCompositeItem(string prefix = null)
             {
                 return _items
-                    .Where(i => i.IsCompositeParent && i.Available > 0)
+                    .Where(i => i.IsCompositeParent && i.Available > 0 && (string.IsNullOrEmpty(prefix) || (i.ItemNumber != null && i.ItemNumber.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))))
                     .OrderBy(_ => Guid.NewGuid())
                     .FirstOrDefault();
             }
-            public InventorySnapshotItem GetRandomOutOfStockItem() =>
-                _items.Where(i => i.Available <= 0).OrderBy(_ => Guid.NewGuid()).FirstOrDefault();
+            public InventorySnapshotItem GetRandomOutOfStockItem(string prefix = null) =>
+                _items.Where(i => i.Available <= 0 && (string.IsNullOrEmpty(prefix) || (i.ItemNumber != null && i.ItemNumber.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))).OrderBy(_ => Guid.NewGuid()).FirstOrDefault();
 
-            public List<InventorySnapshotItem> GetMultipleItems(int count) =>
-                _items.Where(i => i.Available > 0)
+            public List<InventorySnapshotItem> GetMultipleItems(int count, string prefix = null) =>
+                _items.Where(i => i.Available > 0 && (string.IsNullOrEmpty(prefix) || (i.ItemNumber != null && i.ItemNumber.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))))
                       .OrderBy(_ => Guid.NewGuid())
                       .Take(count)
                       .ToList();
